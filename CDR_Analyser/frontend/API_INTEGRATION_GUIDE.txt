@@ -1,0 +1,184 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CDR Analysis API  —  Integration Guide
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+=== 1. START THE BACKEND ===
+
+  pip install fastapi uvicorn python-multipart
+  cd CDR_Analyser
+  uvicorn api:app --reload --port 8000
+
+  API runs at: http://localhost:8000
+  Docs at:     http://localhost:8000/docs   (auto-generated)
+
+
+=== 2. ENDPOINTS ===
+
+  GET  /health
+  ─────────────────────────────────────────────────────────
+  Returns: { "status": "ok" }
+  Use to check if backend is running before showing upload UI.
+
+
+  POST /analyse
+  ─────────────────────────────────────────────────────────
+  Body: multipart/form-data
+    file          : CDR file (.xlsx / .xls / .csv)  [required]
+    contamination : float 0.0–0.5                   [optional, default 0.15]
+
+  Returns JSON:
+  {
+    "session_id": "a1b2c3d4",
+    "pdf_url": "/download/a1b2c3d4",
+
+    "summary": {
+      "target_number":    "03252274003",
+      "total_records":    735,
+      "date_from":        "2024-03-01",
+      "date_to":          "2024-03-17",
+      "unique_contacts":  73,
+      "outgoing_calls":   241,
+      "incoming_calls":   125,
+      "outgoing_sms":     1,
+      "incoming_sms":     368,
+      "total_duration_s": 46562,
+      "suspicious_count": 11,
+      "high_risk":        6,
+      "medium_risk":      5,
+      "low_risk":         62
+    },
+
+    "contacts": [
+      {
+        "number":        "03252274003",
+        "total_calls":   60,
+        "outgoing":      0,
+        "incoming":      60,
+        "sms_count":     60,
+        "voice_count":   0,
+        "avg_duration":  0.0,
+        "night_ratio":   17.0,
+        "unique_sites":  25,
+        "burst_score":   3,
+        "imei_count":    1,
+        "max_gap_days":  2,
+        "is_foreign":    false,
+        "one_way":       true,
+        "risk":          "HIGH",
+        "is_suspicious": true,
+        "behaviour":     "Heavy SMS User",
+        "anomaly_score": 0.714,
+        "reasons":       ["Bulk SMS pattern", "Multi-tower mobility"],
+        "first_contact": "2024-03-01 09:57:12",
+        "last_contact":  "2024-03-17 05:51:00"
+      },
+      ...
+    ],
+
+    "hourly_activity": [
+      { "hour": "00:00", "calls": 5 },
+      { "hour": "01:00", "calls": 2 },
+      ...
+      { "hour": "23:00", "calls": 8 }
+    ],
+
+    "dow_activity": [
+      { "day": "Mon", "calls": 120 },
+      { "day": "Tue", "calls": 98 },
+      ...
+    ],
+
+    "call_type_breakdown": [
+      { "name": "Incoming SMS", "value": 368 },
+      { "name": "Outgoing",     "value": 241 },
+      { "name": "Incoming",     "value": 125 },
+      { "name": "Outgoing SMS", "value": 1   }
+    ],
+
+    "location_trail": [
+      {
+        "site":   "SAG4757_Village bahadur ali kalhoro (2G)",
+        "visits": 110,
+        "first":  "2024-03-10 13:04:00",
+        "last":   "2024-03-13 11:37:00",
+        "lat":    27.2417,
+        "lon":    68.2044
+      },
+      ...
+    ],
+
+    "behaviour_distribution": [
+      { "label": "Occasional Contact",   "count": 50 },
+      { "label": "Heavy SMS User",        "count": 30 },
+      { "label": "High-Frequency Caller", "count": 4  }
+    ]
+  }
+
+
+  GET  /download/{session_id}
+  ─────────────────────────────────────────────────────────
+  Returns: PDF file download
+  Use the session_id from the /analyse response.
+
+
+=== 3. FRONTEND INTEGRATION (Next.js) ===
+
+  Copy  frontend/cdrService.js  into your project, e.g.:
+    lib/cdrService.js   or   services/cdrService.js
+
+  Add to your .env.local:
+    NEXT_PUBLIC_CDR_API_URL=http://localhost:8000
+
+  Then in your component:
+
+    import { analyseCDR, downloadReport } from "@/lib/cdrService";
+
+    // Upload and analyse
+    const result = await analyseCDR(
+      file,
+      (pct) => setUploadProgress(pct)   // optional progress callback
+    );
+
+    // Access data
+    result.summary.suspicious_count
+    result.contacts                      // array of all contacts
+    result.hourly_activity               // for bar chart
+    result.call_type_breakdown           // for pie chart
+    result.location_trail                // for table/map
+
+    // Download PDF
+    downloadReport(result.session_id);
+
+
+=== 4. RISK LEVELS EXPLAINED ===
+
+  HIGH   = flagged by ML + top 50% anomaly score among suspicious
+  MEDIUM = flagged by ML + bottom 50% anomaly score among suspicious
+  LOW    = not flagged by ML
+
+  HIGH + MEDIUM always = suspicious_count
+
+
+=== 5. INVESTIGATIVE FLAGS (in contact.reasons) ===
+
+  "High night-time activity"         → >40% calls between 10PM–5AM
+  "Bulk SMS pattern"                 → >90% SMS with voice calls too
+  "Unusually high call frequency"    → >50 calls in period
+  "Very long call detected"          → single call >15 minutes
+  "Multi-tower mobility"             → >8 cell towers used
+  "One-way: almost all INCOMING"     → possible controlled asset
+  "One-way: almost all OUTGOING"     → possible controller/handler
+  "Call burst detected"              → N calls in 15-minute window
+  "Visited X towers in a single day" → surveillance/recon pattern
+  "Multiple IMEIs detected"          → device swapping
+  "Dormant then reactivated"         → gap of 5+ days then activity
+  "Foreign / unregistered number"    → non-Pakistani number
+
+
+=== 6. PRODUCTION NOTES ===
+
+  - Change allow_origins in api.py to your actual frontend domain
+  - Add authentication middleware if needed
+  - PDF files are stored in output/ folder — add cleanup job for old files
+  - For heavy load, run with:  uvicorn api:app --workers 4 --port 8000
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

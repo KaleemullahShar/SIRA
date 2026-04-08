@@ -1,0 +1,39 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CDR Analysis Tool  —  How To Run
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1 — Install Python (one time only)
+  → Go to: https://www.python.org/downloads/
+  → Download Python 3.10 or newer
+  → ⚠️  During install CHECK: "Add Python to PATH"
+
+STEP 2 — Put your CDR file in the INPUT folder
+  Supported formats: .xlsx   .xls   .csv
+
+STEP 3 — Run the tool
+
+  On WINDOWS:
+    Double-click   RUN_WINDOWS.bat
+
+  On MAC / LINUX:
+    Open Terminal, go to this folder, then type:
+      bash RUN_MAC_LINUX.sh
+
+  In VS CODE:
+    Open this folder → Press F5
+
+STEP 4 — Get your report
+  The PDF report appears in the OUTPUT folder automatically.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WANT TO ANALYSE A DIFFERENT FILE?
+  Just copy your new CDR file into the INPUT folder
+  and run again. Old reports are kept in OUTPUT.
+
+CHANGING THE DEFAULT INPUT FILE:
+  Open main.py in any text editor and change line:
+    DEFAULT_INPUT = "input/Input_CDR.xlsx"
+  to point to your file name.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
