@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Upload, Trash2 } from "lucide-react";
 import "./App.css";
 
-const CDR_API_URL = import.meta.env.VITE_CDR_API_URL || "http://127.0.0.1:8000";
+const CDR_API_URL = import.meta.env.VITE_CDR_API_URL || "https://sira-production.up.railway.app";
 
 function CDRAnalysis() {
   const [selectedFile, setSelectedFile] = useState(null);
