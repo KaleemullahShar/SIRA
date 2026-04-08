@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://confident-transformation-production.up.railway.app/api";
 
 export const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
