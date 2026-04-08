@@ -1,4 +1,4 @@
-const API_URL = "https://confident-transformation-production.up.railway.app/api";
+const API_URL = "https://spirited-freedom-production-2410.up.railway.app/api";
 
 export const getAuthHeaders = () => {
     const token = localStorage.getItem("token");

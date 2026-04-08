@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./App.css";
 
-const API_URL = "https://confident-transformation-production.up.railway.app/api";
+const API_URL = "https://spirited-freedom-production-2410.up.railway.app/api";
 
 function Login() {
   const [username, setUsername] = useState("");
